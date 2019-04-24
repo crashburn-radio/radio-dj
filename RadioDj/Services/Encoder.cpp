@@ -12,6 +12,10 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
+#include <math.h>
+
+#define bitrate 320000
+
 /* check that a given sample format is supported by the encoder */
 static int check_sample_fmt(const AVCodec *codec, enum AVSampleFormat sample_fmt) {
     const enum AVSampleFormat *p = codec->sample_fmts;
@@ -72,7 +76,7 @@ void Encoder::setup() {
         exit(1);
     }
     /* put sample parameters */
-    c->bit_rate = 192000;
+    c->bit_rate = bitrate;
     // c->sample_fmt = AV_SAMPLE_FMT_FLTP;
     c->sample_fmt = AV_SAMPLE_FMT_S32P;
     if (!check_sample_fmt(codec, c->sample_fmt)) {
@@ -100,6 +104,7 @@ void Encoder::setup() {
     frame->nb_samples = c->frame_size;
     frame->format = c->sample_fmt;
     frame->channel_layout = c->channel_layout;
+
     /* allocate the data buffers */
     ret = av_frame_get_buffer(frame, 0);
     if (ret < 0) {
@@ -107,6 +112,11 @@ void Encoder::setup() {
         exit(1);
     }
 
+    ret = av_frame_make_writable(frame);
+    if (ret < 0) {
+        fprintf(stderr, "Could not make frame writable\n");
+        exit(1);
+    }
 
 }
 
@@ -140,12 +150,80 @@ int Encoder::channels() {
 
 void Encoder::encodeToQueue(std::queue<unsigned char> *queue) {
     int ret;
+
     /* send the frame for encoding */
     ret = avcodec_send_frame(c, frame);
     if (ret < 0) {
         fprintf(stderr, "Error sending the frame to the encoder\n");
         exit(1);
     }
+
+    /* read all the available output packets (in general there may be any
+     * number of them */
+    pkt = av_packet_alloc();
+    if (!pkt) {
+        fprintf(stderr, "could not allocate the packet\n");
+        exit(1);
+    }
+
+    while (ret >= 0) {
+        ret = avcodec_receive_packet(c, pkt);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            return;
+        else if (ret < 0) {
+            fprintf(stderr, "Error encoding audio frame\n");
+            exit(1);
+        }
+
+
+        for (int i = 0; i < pkt->size; i++) {
+            queue->push(pkt->data[i]);
+        }
+
+        av_packet_unref(pkt);
+    }
+}
+
+void Encoder::encode(int32_t *leftInput, int32_t *rightInput, size_t size) {
+
+    for (int i = 0; i < size; i++) {
+        leftQueue->push(leftInput[i]);
+        rightQueue->push(rightInput[i]);
+    }
+
+    int32_t *left = (int32_t *) frame->data[0];
+    int32_t *right = (int32_t *) frame->data[1];
+
+    int frameSize = c->frame_size;
+
+    while (rightQueue->size() > frameSize) {
+
+        for (int i = 0; i < frameSize; i++) {
+
+            left[i] = leftQueue->front();
+            leftQueue->pop();
+
+            right[i] = rightQueue->front();
+            rightQueue->pop();
+
+        }
+
+        encodeFrame();
+
+    }
+
+}
+
+void Encoder::encodeFrame() {
+    int ret;
+
+    /* send the frame for encoding */
+    ret = avcodec_send_frame(c, frame);
+    if (ret < 0) {
+        fprintf(stderr, "Error sending the frame to the encoder\n");
+        exit(1);
+    }
+
     /* read all the available output packets (in general there may be any
      * number of them */
     pkt = av_packet_alloc();
@@ -162,14 +240,16 @@ void Encoder::encodeToQueue(std::queue<unsigned char> *queue) {
             exit(1);
         }
 
-        // fwrite(pkt->data, 1, pkt->size, output);
-
         for (int i = 0; i < pkt->size; i++) {
             queue->push(pkt->data[i]);
-            //queue->push(0);
         }
 
         av_packet_unref(pkt);
     }
+
+}
+
+std::queue<unsigned char> *Encoder::getQueue() const {
+    return queue;
 }
 

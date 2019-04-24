@@ -3,7 +3,7 @@ add_executable(RadioDj RadioDjMain.cpp
         Services/ShoutService.h
         Services/Encoder.cpp
         Services/Encoder.h
-        )
+        Services/Decoder.cpp Services/Decoder.h Services/Deck.cpp Services/Deck.h Services/SendService.cpp Services/SendService.h)
 
 target_link_libraries(RadioDj
         ${LibShout_LIBRARIES}

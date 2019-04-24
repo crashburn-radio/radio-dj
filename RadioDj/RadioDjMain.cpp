@@ -1,115 +1,103 @@
-/* -*- c-basic-offset: 8; -*-
- * example.c: Demonstration of the libshout API.
- * $Id: nonblocking.c 11584 2006-06-18 14:45:07Z msmith $
- */
-
-#include <stdio.h>
-#include <iostream>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <vector>
-#include <fstream>      // std::ifstream
-
 #include <math.h>
 
-extern "C" {
-#include <libavcodec/avcodec.h>
-//#include <libavfilter/avcodec.h>
-//#include <libavfilter/avfiltergraph.h>
-#include <libavfilter/buffersink.h>
-#include <libavfilter/buffersrc.h>
-#include <libavformat/avformat.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/common.h>
-#include <libavutil/frame.h>
-#include <libavutil/mem.h>
-#include <libavutil/samplefmt.h>
-}
+#include "Services/Deck.h"
+#include "Services/SendService.h"
 
-#include <shout/shout.h>
-#include "Services/ShoutService.h"
-#include "Services/Encoder.h"
 
-#include <sox.h>
-
+#define bufferSize 512
+#define  SampleRate 44100
 
 int main() {
 
-    const char *filename = "/home/palo/input.mp3";
 
-    printf("setup Shout Service \n");
-    ShoutService shouter = ShoutService();
-    shouter.setup();
+    auto *sendService = new SendService();
 
-    Encoder encoder = Encoder();
-    encoder.setup();
+    auto deckA = new Deck();
+    auto deckB = new Deck();
+    auto deckC = new Deck();
 
-    sox_init();
-    sox_format_init();
+    const char *filename = "/home/palo/input.ogg";
+    deckA->load(filename);
+    deckB->load(filename);
+    deckC->load(filename);
 
-    /* create file reader */
-    sox_format_t *openRead = sox_open_read(filename, NULL, NULL, NULL);
+    int32_t deckALeft[bufferSize];
+    int32_t deckARight[bufferSize];
 
-    /* mixing */
-    sox_sample_t mixBuffer[1024 * 1024];
+    int32_t deckBLeft[bufferSize];
+    int32_t deckBRight[bufferSize];
 
-    int channels = encoder.channels();
-    int frameSize = encoder.frameSize();
-    int sampleRate = encoder.sample_rate();
+    int32_t mixLeft[bufferSize];
+    int32_t mixRight[bufferSize];
 
-    printf("frameSize %i", frameSize);
-    std::queue<unsigned char> queue;
-
-    unsigned char sendBuffer[512];
-    // FILE *pFile = fopen("/home/palo/test.mp3", "w"); // todo delete
-
-    int32_t *dataLeft = encoder.getDeprecatedDataLeft();
-    int32_t *dataRight = encoder.getDeprecatedDataRight();
+    double_t rampFactor = 1.0 / (5.0 * SampleRate);
+    long rampCounter = 0;
 
     while (true) {
-        size_t readLength = sox_read(openRead, mixBuffer, 2 * frameSize);
 
-
-        for (int index = 0; index < frameSize; index++) {
-            dataLeft[index] = (int32_t) mixBuffer[2 * index];
-            dataRight[index] = (int32_t) mixBuffer[2 * index + 1];
-            //dataLeft[index] = 0;
-            //dataRight[index] = 0;
-        }
-        // printf("sample :  %i,%i \n", (int32_t) mixBuffer[0], (int32_t) mixBuffer[1]);
-
-        encoder.encodeToQueue(&queue);
-
-        while (!queue.empty()) {
-
-            long read = std::min(sizeof(sendBuffer), queue.size());
-
-            for (int i = 0; i < read; i++) {
-                sendBuffer[i] = (unsigned char) queue.front();
-                queue.pop();
-            }
-
-            if (read > 0) {
-                shouter.send(sendBuffer, read);
-
-                // fwrite(sendBuffer, 1, read, pFile);
-                // test exit
-                //readLength = 0;
-                //break;
-            }
-
-            shouter.sync();
-        }
+        /* reading */
+        size_t readLength = deckA->read(
+                (int32_t *) &deckALeft,
+                (int32_t *) &deckARight,
+                bufferSize);
 
         if (readLength == 0) {
             break;
         }
 
-    }
-    //fclose(pFile);
+        if (!deckA->hitCue()) {
+            sendService->sendBlocking(
+                    (int32_t *) &deckALeft,
+                    (int32_t *) &deckARight,
+                    readLength);
 
-    shouter.shutdown();
+            continue;
+        }
+
+        /* load second deck */
+        size_t length = deckB->read(
+                (int32_t *) &deckBLeft,
+                (int32_t *) &deckBRight,
+                readLength);
+
+        if (length != readLength) {
+            printf("can't handle different bufer sizes for reading %i != %i\n", length, readLength);
+            exit(1);
+        }
+
+
+        /* mixing */
+        double_t rampA;
+        double_t rampB;
+        for (int sample = 0; sample < readLength; sample++) {
+            rampB = rampCounter * rampFactor;
+            rampA = 1 - rampB;
+            if (rampB >= 1) {
+                rampB = 1;
+                rampA = 0;
+            }
+            mixLeft[sample] = round(deckALeft[sample] * rampA) + round(deckBLeft[sample] * rampB);
+            mixRight[sample] = round(deckARight[sample] * rampA) + round(deckBRight[sample] * rampB);
+            rampCounter++;
+        }
+
+        sendService->sendBlocking(
+                (int32_t *) &mixLeft,
+                (int32_t *) &mixRight,
+                readLength);
+
+        if (rampA == 0) {
+            // todo : hacky -> memory leak
+            deckA = deckB;
+            deckB = deckC;
+            deckC = new Deck();
+            deckC->load(filename);
+            printf("switched Decks\n");
+            rampCounter = 0;
+        }
+
+    }
+
 
     return 0;
 }
