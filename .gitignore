@@ -4,6 +4,7 @@ cmake-build-debug
 .history
 *.ogg
 *.mp3
+.rust-runtime
 
 # ---> C++
 # Compiled Object files

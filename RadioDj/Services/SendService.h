@@ -15,6 +15,8 @@ public:
 
     SendService();
 
+    void setup();
+
     void sendBlocking(int32_t *left, int32_t *right, size_t size);
 
 private:

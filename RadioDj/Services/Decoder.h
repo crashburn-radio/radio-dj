@@ -6,13 +6,15 @@
 #define RADIODJ_DECODER_H
 
 #include <sox.h>
+#include <memory>
+#include <string>
+#include "../Utils/Types.h"
 
 class Decoder {
 
 public:
 
-    Decoder(const char *filename);
-
+    explicit Decoder(Path filename);
 
     void seekToPosition(long sample);
 
@@ -34,6 +36,7 @@ public:
 
 private:
     sox_format_t *readSession;
+    Path filename;
 };
 
 

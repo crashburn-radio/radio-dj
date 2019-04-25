@@ -38,7 +38,6 @@ public:
               mount(mount),
               username(username),
               format(format) {
-        this->setup();
     }
 
     /**
@@ -61,8 +60,9 @@ public:
     void sync();
 
 
-private:
     void setup();
+
+private:
 
     void shutdown();
 

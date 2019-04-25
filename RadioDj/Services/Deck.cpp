@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by palo on 4/24/19.
 //
@@ -7,7 +9,8 @@
 #define bufferSize 4096
 #define SampleRate 44100
 
-void Deck::load(const char *filename) {
+void Deck::load() {
+
     decoder = std::make_shared<Decoder>(filename);
     position = 0;
 
@@ -55,3 +58,8 @@ long Deck::getPosition() const {
 bool Deck::hitCue() {
     return position > cue_out;
 }
+
+Deck::Deck(Path filename) : filename(std::move(filename)) {
+
+}
+

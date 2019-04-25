@@ -21,6 +21,8 @@ pkg_check_modules(AVUtil REQUIRED libavutil)
 pkg_check_modules(SWResample REQUIRED libswresample)
 pkg_check_modules(SWScale REQUIRED libswscale)
 
+# json
+pkg_check_modules(LibJansson REQUIRED jansson)
 
 # projects
 add_subdirectory (RadioDj)

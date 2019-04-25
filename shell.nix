@@ -6,6 +6,7 @@ let
     pkgs.libshout
     pkgs.sox
     pkgs.ffmpeg-full
+    pkgs.jansson
   ];
 
   buildTools = [
@@ -21,6 +22,15 @@ let
     script
   ];
 
+  rust = pkgs.symlinkJoin {
+    name = "rust";
+    paths = [
+      pkgs.rustc
+        pkgs.rust-cbindgen
+        pkgs.rustup
+        pkgs.cargo
+    ];
+  };
 
 
   script =
@@ -47,9 +57,11 @@ let
 in
 pkgs.mkShell {
 
-  buildInputs = libraries ++ buildTools ++ ide;
+  buildInputs = libraries ++ buildTools ++ ide ++ [ rust ];
 
   shellHook = /* sh */ ''
   HISTFILE=${toString ./.}/.history
+  rm .rust-runtime || true
+  ln -s ${rust} .rust-runtime
   '';
 }

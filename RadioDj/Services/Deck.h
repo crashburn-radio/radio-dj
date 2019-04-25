@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include "Decoder.h"
+#include "../Utils/Types.h"
 
 /**
  * A dec holds a sound file and can be mixed with other decks
@@ -15,6 +16,9 @@
 class Deck {
 
 public:
+
+    explicit Deck(Path filename);
+
     /**
      * position for playback.
      * @return
@@ -26,7 +30,7 @@ public:
      *
      * @param filename path to the file to load
      */
-    void load(const char *filename);
+    void load();
 
 
     /**
@@ -48,6 +52,8 @@ public:
 
 private:
 
+    Path filename;
+
     std::shared_ptr<Decoder> decoder;
 
     long position = 0;
@@ -55,12 +61,12 @@ private:
     /**
      * cue sample to start track
      */
-    long cue_in;
+    long cue_in{};
 
     /**
      * cue sample to start fadeout
      */
-    long cue_out;
+    long cue_out{};
 };
 
 

@@ -17,6 +17,11 @@ SendService::SendService() {
             SHOUT_FORMAT_MP3
     );
 
+
+}
+
+void SendService::setup() {
+    shouter->setup();
     encoder.setup();
     encodedQueue = encoder.getQueue();
 
@@ -46,3 +51,4 @@ void SendService::sendBlocking(int32_t *left, int32_t *right, size_t size) {
     }
 
 }
+
