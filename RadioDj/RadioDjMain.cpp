@@ -8,33 +8,45 @@
 #include <thread>
 #include <string>
 #include <memory>
+#include <cstdio>
+#include <iostream>
+#include <stdexcept>
 
 #include "Utils/Types.h"
+#include "Services/NextTrackService.h"
 
-#define bufferSize 512
-#define  SampleRate 44100
 
-int main() {
+int main(int argc, char **argv) {
+
+    const char *command = argv[1];
+
+    NextTrackService service;
+    std::shared_ptr<Track> track = service.getNextFile(command);
+    //printf("filename : %s\n", track->filename.c_str());
+    //printf("cue in   : %li\n", track->cueIn);
+    //printf("filename : %li\n", track->cueOut);
+    //exit(1337)
+
 
     ThreadSend threadSend;
     threadSend.setup();
 
-    Path filename = std::make_shared<std::string>("/home/palo/input.ogg");
     ThreadMix threadMix;
     threadMix.setup(&threadSend);
-    threadMix.load(filename);
-    threadMix.load(filename);
-    threadMix.load(filename);
+    threadMix.load(service.getNextFile(command));
+    threadMix.load(service.getNextFile(command));
+    threadMix.load(service.getNextFile(command));
 
     std::thread t2(&ThreadMix::loop, &threadMix);
     std::thread t1(&ThreadSend::loop, &threadSend);
 
     while (true) {
         threadMix.wait();
-        threadMix.load(filename);
+        threadMix.load(service.getNextFile(command));
     }
 
     return 0;
 }
+
 
 

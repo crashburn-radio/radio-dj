@@ -11,7 +11,7 @@ add_executable(RadioDj RadioDjMain.cpp
         Services/SendService.h
         Services/ThreadSend.cpp
         Services/ThreadSend.h
-        Utils/BlockingQueue.tpp Services/ThreadMix.cpp Services/ThreadMix.h Utils/Types.h)
+        Utils/BlockingQueue.tpp Services/ThreadMix.cpp Services/ThreadMix.h Utils/Types.h Services/NextTrackService.cpp Services/NextTrackService.h)
 
 target_link_libraries(RadioDj
         ${LibShout_LIBRARIES}

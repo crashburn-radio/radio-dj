@@ -26,8 +26,8 @@ void ThreadMix::loop() {
     int32_t mixLeft[bufferSize];
     int32_t mixRight[bufferSize];
 
-    int32_t * sendLeft;
-    int32_t * sendRight;
+    int32_t *sendLeft;
+    int32_t *sendRight;
 
 
     double_t rampFactor = 1.0 / (5.0 * SampleRate);
@@ -128,7 +128,7 @@ void ThreadMix::wait() {
     backpressureConditional.wait(lock);
 }
 
-void ThreadMix::load(Path filename) {
-    commandQueue.push(std::make_shared<Deck>(filename));
+void ThreadMix::load(std::shared_ptr<Track> track) {
+    commandQueue.push(std::make_shared<Deck>(track));
 }
 

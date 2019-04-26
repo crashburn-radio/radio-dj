@@ -17,7 +17,7 @@ class Deck {
 
 public:
 
-    explicit Deck(Path filename);
+    explicit Deck(std::shared_ptr<Track> track);
 
     /**
      * position for playback.
@@ -52,7 +52,7 @@ public:
 
 private:
 
-    Path filename;
+    std::shared_ptr<Track> track;
 
     std::shared_ptr<Decoder> decoder;
 
@@ -61,12 +61,12 @@ private:
     /**
      * cue sample to start track
      */
-    long cue_in{};
+    long cueIn{};
 
     /**
      * cue sample to start fadeout
      */
-    long cue_out{};
+    long cueOut{};
 };
 
 

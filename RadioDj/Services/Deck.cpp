@@ -11,18 +11,14 @@
 
 void Deck::load() {
 
-    decoder = std::make_shared<Decoder>(filename);
+    decoder = std::make_shared<Decoder>(track->filename);
     position = 0;
 
-    // todo : for testing
-    //cue_in = 2 * SampleRate;
-    cue_in = 202333;
+    cueIn = track->cueIn;
+    cueOut = track->cueOut;
 
-    //cue_out = 15 * SampleRate;
-    cue_out = 4420414;
-
-    decoder->seekToPosition(cue_in);
-    position = cue_in;
+    decoder->seekToPosition(cueIn);
+    position = cueIn;
 
 }
 
@@ -30,10 +26,9 @@ size_t Deck::read(int32_t *left, int32_t *right, size_t size) {
 
     int32_t mixBuffer[bufferSize];
 
-
     size_t readSamples = size;
     if (!hitCue()) {
-        readSamples = std::min((size_t) cue_out - position, size);
+        readSamples = std::min((size_t) cueOut - position, size);
         if (readSamples == 0) {
             readSamples = size;
         }
@@ -56,10 +51,10 @@ long Deck::getPosition() const {
 }
 
 bool Deck::hitCue() {
-    return position > cue_out;
+    return position > cueOut;
 }
 
-Deck::Deck(Path filename) : filename(std::move(filename)) {
+Deck::Deck(std::shared_ptr<Track> track) : track(std::move(track)) {
 
 }
 

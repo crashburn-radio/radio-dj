@@ -33,7 +33,7 @@ public:
     */
     void wait();
 
-    void load(Path filename);
+    void load(std::shared_ptr<Track> filename);
 
 private:
 
