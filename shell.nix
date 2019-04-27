@@ -26,11 +26,13 @@ let
   # todo : spaces in files are still a problem!
   nextTrackScript = folder:
   pkgs.writeShellScriptBin "nextTrack" /* sh */ ''
-  IFS='
-  '
-  A=( `find ${folder} -type f  | egrep "(mp3$|ogg$)"` )
-  elemNumber=$(( $RANDOM % ${"$"}{#A[*]} ))
-  ${radioPkgs}/bin/print-track "${"$"}{A[${"$"}elemNumber]}"
+    export PATH="${pkgs.lib.makeBinPath [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+    ]}"
+    TRACK=$(find ${folder} -type f  | egrep "(mp3$|ogg$)" | shuf -n 1)
+    ${radioPkgs}/bin/print-track "$TRACK"
   '';
 
   runRadio = pkgs.writeShellScriptBin "radio-run" /* sh */ ''
