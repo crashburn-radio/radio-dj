@@ -4,7 +4,7 @@ writeShellScriptBin, aubio,
 ...}:
 
 let
-  version = "1.0";
+  version = "0.1.0";
 
   tmpFile = "/dev/shm/tmpfile.wav";
 
@@ -32,7 +32,7 @@ let
   printTrack = writeShellScriptBin "print-track" /* sh */ ''
     FILE=$1
 
-    (rm ${tmpFile} &> /dev/null) || true 
+    (rm ${tmpFile} &> /dev/null) || true
 
     ${sox}/bin/sox -q "$FILE" ${tmpFile} &> /dev/null
 
@@ -66,10 +66,10 @@ symlinkJoin {
     printTrack
   ];
   meta = with stdenv.lib; {
-    description = "Automatic dj tool";
-    homepage = https://www.openclonk.org;
+    description = "automatic radio dj tool set";
+    homepage = https://git.ingolf-wagner.de/crashburn_radio/radio_dj;
     license = licenses.gpl3;
-    maintainers = with maintainers; [ mrvandalo ];
+    maintainers = with maintainers; [ palo ];
     platforms = [ "x86_64-linux" "i686-linux" ];
   };
 }
