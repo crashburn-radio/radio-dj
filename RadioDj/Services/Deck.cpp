@@ -1,4 +1,5 @@
 #include <utility>
+#include <iostream>
 
 //
 // Created by palo on 4/24/19.
@@ -19,7 +20,7 @@ void Deck::load() {
 
     decoder->seekToPosition(cueIn);
     position = cueIn;
-
+    std::cout << "Loaded Track : " << * track->filename << "\n";
 }
 
 size_t Deck::read(int32_t *left, int32_t *right, size_t size) {
@@ -46,12 +47,12 @@ size_t Deck::read(int32_t *left, int32_t *right, size_t size) {
     return readLength / 2;
 }
 
-long Deck::getPosition() const {
-    return position;
-}
-
 bool Deck::hitCue() {
     return position > cueOut;
+}
+
+std::shared_ptr<std::string> Deck::getFilename() {
+    return this->track->filename;
 }
 
 Deck::Deck(std::shared_ptr<Track> track) : track(std::move(track)) {

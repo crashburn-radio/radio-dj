@@ -5,6 +5,8 @@ cmake-build-debug
 *.ogg
 *.mp3
 .rust-runtime
+result
+nextTrack.sh
 
 # ---> C++
 # Compiled Object files

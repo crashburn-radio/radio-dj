@@ -13,7 +13,7 @@ void ThreadSend::loop() {
 
             const SendCommand &command = commandQueue.pop();
 
-            sendService.sendBlocking(
+            sendService->sendBlocking(
                     command.left->data(),
                     command.right->data(),
                     command.left->size()
@@ -33,7 +33,7 @@ void ThreadSend::loop() {
 }
 
 void ThreadSend::setup() {
-    sendService.setup();
+    sendService->setup();
     backpressureConditional.notify_all();
 }
 
@@ -50,4 +50,8 @@ void ThreadSend::send(int32_t *left, int32_t *right, size_t size) {
 void ThreadSend::wait() {
     std::unique_lock<std::mutex> lock(backpressureMutex);
     backpressureConditional.wait(lock);
+}
+
+ThreadSend::ThreadSend(const char *host, int port, const char *mount, const char *username, const char *password) {
+    sendService = std::make_shared<SendService>(host, port, mount, username, password);
 }

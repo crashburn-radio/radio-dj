@@ -29,3 +29,7 @@ add_subdirectory (RadioDj)
 add_subdirectory (examples/libshout)
 add_subdirectory (examples/ffmpeg)
 
+install(TARGETS RadioDj
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  )

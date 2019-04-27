@@ -20,12 +20,6 @@ public:
     explicit Deck(std::shared_ptr<Track> track);
 
     /**
-     * position for playback.
-     * @return
-     */
-    long getPosition() const;
-
-    /**
      * load a file to the deck ready for reading from it.
      *
      * @param filename path to the file to load
@@ -49,6 +43,12 @@ public:
      * @return true if cue_out point is passed
      */
     bool hitCue();
+
+    /**
+     * filename of currently loaded track
+     */
+    std::shared_ptr<std::string> getFilename();
+
 
 private:
 

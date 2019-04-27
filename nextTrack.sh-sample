@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# exampel for development
+cat <<EOF
+{
+  "filename":"/home/radio/music-library/Abba - Hey Dj.mp3",
+  "cueIn":8022,
+  "cueOut":94985
+}
+EOF

@@ -6,14 +6,14 @@
 
 #define bufferSize 1024
 
-SendService::SendService() {
+SendService::SendService(const char *host, int port, const char *mount, const char *username, const char *password) {
 
     shouter = std::make_shared<ShoutService>(
-            "127.0.0.1",
-            8000,
-            "/radio.ogg",
-            "palo",
-            "palo",
+            host,
+            port,
+            mount,
+            username,
+            password,
             SHOUT_FORMAT_MP3
     );
 

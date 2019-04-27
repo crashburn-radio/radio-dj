@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <iostream>
 #include <stdexcept>
+#include <sstream>
 
 #include "Utils/Types.h"
 #include "Services/NextTrackService.h"
@@ -18,28 +19,42 @@
 
 int main(int argc, char **argv) {
 
-    const char *command = argv[1];
 
     NextTrackService service;
-    std::shared_ptr<Track> track = service.getNextFile(command);
-    //printf("filename : %s\n", track->filename.c_str());
-    //printf("cue in   : %li\n", track->cueIn);
-    //printf("filename : %li\n", track->cueOut);
-    //exit(1337)
 
 
-    ThreadSend threadSend;
+
+    char * host = argv[1];
+
+    std::stringstream convert(argv[2]); // set up a stringstream variable named convert, initialized with the input from argv[1]
+    int port;
+    if (!(convert >> port)){ // do the conversion
+        std::cerr << "Port is not a number" << port << "\n";
+        exit(1);
+    }
+
+    char * mount = argv[3];
+    char * username = argv[4];
+    char * password = argv[5];
+    const char *command = argv[6];
+
+    /* icecast sender thread */
+    ThreadSend threadSend ( host, port,mount, username, password );
     threadSend.setup();
 
+    /* preload decks */
     ThreadMix threadMix;
     threadMix.setup(&threadSend);
     threadMix.load(service.getNextFile(command));
     threadMix.load(service.getNextFile(command));
     threadMix.load(service.getNextFile(command));
 
+    /* start playback and mixing threads */
     std::thread t2(&ThreadMix::loop, &threadMix);
     std::thread t1(&ThreadSend::loop, &threadSend);
 
+
+    /* load new tracks, when deckA is switched to deckB */
     while (true) {
         threadMix.wait();
         threadMix.load(service.getNextFile(command));

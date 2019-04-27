@@ -26,12 +26,7 @@ public:
      * @param username
      * @param format should be SHOUT_FORMAT_MP3
      */
-    ShoutService(const char *host,
-                 int port,
-                 const char *mount,
-                 const char *password,
-                 const char *username,
-                 int format)
+    ShoutService(const char *host, int port, const char *mount, const char *username, const char *password, int format)
             : host(host),
               port(port),
               password(password),

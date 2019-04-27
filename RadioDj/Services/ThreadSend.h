@@ -23,6 +23,8 @@ class ThreadSend {
 
 public:
 
+    ThreadSend(const char *host, int port, const char *mount, const char *username, const char *password);
+
     void setup();
 
     void loop();
@@ -45,7 +47,7 @@ private:
     /**
      * service to run in thread
      */
-    SendService sendService;
+    std::shared_ptr<SendService> sendService;
 
     /**
      * command message queue

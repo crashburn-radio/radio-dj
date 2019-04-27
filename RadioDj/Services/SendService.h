@@ -13,7 +13,7 @@
 class SendService {
 public:
 
-    SendService();
+    SendService(const char *host, int port, const char *mount, const char *username, const char *password);
 
     void setup();
 

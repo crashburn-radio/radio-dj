@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <cmath>
+#include <iostream>
 #include "ThreadMix.h"
 #include "ThreadSend.h"
 
@@ -42,6 +43,8 @@ void ThreadMix::loop() {
     double_t deckBRampValue;
 
     int commandQueueBufferSize = 0;
+
+    std::cout << "Playback Track : " << * deckA->getFilename() << "\n";
 
     while (true) {
 
@@ -116,7 +119,7 @@ void ThreadMix::loop() {
             deckB = deckC;
             deckC = nullptr;
             backpressureConditional.notify_all();
-            printf("switched Decks\n");
+            std::cout << "Playback Track : " << * deckA->getFilename() << "\n";
             rampSampleCounter = 0;
         }
 
