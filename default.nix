@@ -33,7 +33,7 @@ let
 
   /* use this tool as first argument */
   printTrack = writeShellScriptBin "print-track" /* sh */ ''
-  FILE=$1
+  FILE="$1"
   JSON_FILE="$FILE.rdj"
 
   # create tmp file
@@ -41,21 +41,21 @@ let
 
   if [[ -f "$JSON_FILE" ]]
   then
-    cueInApprox=$( cat $JSON_FILE | ${jq}/bin/jq '.cueInApprox' )
-    cueOutApprox=$( cat $JSON_FILE | ${jq}/bin/jq '.cueOutApprox' )
+    cueInApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '.cueInApprox' )
+    cueOutApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '.cueOutApprox' )
 
     CUE_IN=$(
       ${aubio}/bin/aubiotrack \
                     --time-format samples \
                     --input ${tmpFile} | \
-        while read line; do test $line -le $cueInApprox && echo $line; done | \
-        tail -n1 )
+        while read line; do test $line -ge $cueInApprox && echo $line; done | \
+        head -n1 )
     CUE_OUT=$(
       ${aubio}/bin/aubiotrack \
                     --time-format samples \
                     --input ${tmpFile} | \
-        while read line; do test $line -ge $cueOutApprox && echo $line; done | \
-        head -n1 )
+        while read line; do test $line -le $cueOutApprox && echo $line; done | \
+        tail -n1 )
 
   else
 
