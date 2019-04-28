@@ -36,16 +36,18 @@ let
 
   tmpFile = "/dev/shm/render.wav";
 
-
-  runRadio = pkgs.writeShellScriptBin "radio-run" /* sh */ ''
+  runRadio = folder:
+  pkgs.writeShellScriptBin "radio-run" /* sh */ ''
   ${radioPkgs}/bin/RadioDj \
     localhost \
     8000 \
     /radio.ogg \
     palo \
     palo \
-    ${nextTrackScript "/home/palo/music-library/techno"}/bin/nextTrack
+    ${nextTrackScript folder}/bin/nextTrack
   '';
+
+
 
 in
 
@@ -57,9 +59,8 @@ pkgs.mkShell {
     ++ ide
     ++ [
       radioPkgs
-      (nextTrackScript "/home/palo/music-library" )
-      runRadio
-      (testNextTrackScript "/home/palo/music/029_-_01_-_Busted.mp3")
+      (nextTrackScript "./.good" )
+      (runRadio "./.playlist1")
     ]
     ;
 
