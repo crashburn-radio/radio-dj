@@ -5,7 +5,7 @@ mpv,
 ...}:
 
 let
-  version = "0.1.1";
+  version = "0.1.2";
 
   tmpFile = "/dev/shm/tmpfile.wav";
 
@@ -119,7 +119,7 @@ let
       function save_out_cue()
         out_cue = mp.get_property_number("stream-pos")
         track = mp.get_property("path")
-        os.execute("echo '{\"cueInApprox\":" .. in_cue .. ",\"cueOutApprox\":" .. out_cue .. "}' | tee " .. track .. ".rdj")
+        os.execute("echo '{\"cueInApprox\":" .. in_cue .. ",\"cueOutApprox\":" .. out_cue .. "}' | tee '" .. track .. ".rdj'")
       end
 
       mp.add_forced_key_binding("i", "save_in_cue", save_in_cue)
