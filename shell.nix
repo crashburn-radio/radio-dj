@@ -62,7 +62,7 @@ pkgs.mkShell {
     ++ ide
     ++ [
       radioPkgs
-      (nextTrackScript "./.good" )
+      (nextTrackScript "./.playlist1" )
       (runRadio "./.playlist1")
     ]
     ;
