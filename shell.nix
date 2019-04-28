@@ -47,6 +47,45 @@ let
     ${nextTrackScript "/home/palo/music-library/techno"}/bin/nextTrack
   '';
 
+  review = let
+    moveToDir = key: dir: pkgs.writeText "move-with-${key}.lua" ''
+      tmp_dir = "${dir}"
+
+      function move_current_track_${key}()
+        track = mp.get_property("path")
+        os.execute("mkdir -p '" .. tmp_dir .. "'")
+        os.execute("mv '" .. track .. "' '" .. tmp_dir .. "'")
+        os.execute("mv '" .. track .. ".rdj' '" .. tmp_dir .. "'")
+        print("moved '" .. track .. "' to " .. tmp_dir)
+      end
+
+      mp.add_key_binding("${key}", "move_current_track_${key}", move_current_track_${key})
+    '';
+
+    delete = moveToDir "D" "./.graveyard";
+    good = moveToDir "L" "./.good";
+
+    cue_in_out = pkgs.writeText "cue_in_out.lua" ''
+      in_cue = 0
+      function save_in_cue()
+        in_cue = mp.get_property_number("stream-pos")
+      end
+
+      function save_out_cue()
+        out_cue = mp.get_property_number("stream-pos")
+        track = mp.get_property("path")
+        os.execute("echo '{\"cueInApprox\":" .. in_cue .. ",\"cueOutApprox\":" .. out_cue .. "}' | tee " .. track .. ".rdj")
+      end
+
+      mp.add_forced_key_binding("i", "save_in_cue", save_in_cue)
+      mp.add_forced_key_binding("o", "save_out_cue", save_out_cue)
+    '';
+
+  in pkgs.writers.writeDashBin "review" ''
+    exec ${pkgs.mpv}/bin/mpv --no-config --script=${delete} --script=${good} --script=${cue_in_out} "$@"
+  '';
+
+
 in
 
 pkgs.mkShell {
@@ -56,6 +95,7 @@ pkgs.mkShell {
     ++ buildTools
     ++ ide
     ++ [
+      review
       radioPkgs
       (nextTrackScript "/home/palo/music-library" )
       runRadio
