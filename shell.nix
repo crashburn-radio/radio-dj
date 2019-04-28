@@ -23,7 +23,6 @@ let
 
   radioPkgs = pkgs.callPackage ./default.nix {};
 
-  # todo : spaces in files are still a problem!
   nextTrackScript = folder:
   pkgs.writeShellScriptBin "nextTrack" /* sh */ ''
     export PATH="${pkgs.lib.makeBinPath [
@@ -34,6 +33,9 @@ let
     TRACK=$(find ${folder} -type f  | egrep "(mp3$|ogg$)" | shuf -n 1)
     ${radioPkgs}/bin/print-track "$TRACK"
   '';
+
+  tmpFile = "/dev/shm/render.wav";
+
 
   runRadio = pkgs.writeShellScriptBin "radio-run" /* sh */ ''
   ${radioPkgs}/bin/RadioDj \
@@ -57,6 +59,7 @@ pkgs.mkShell {
       radioPkgs
       (nextTrackScript "/home/palo/music-library" )
       runRadio
+      (testNextTrackScript "/home/palo/music/029_-_01_-_Busted.mp3")
     ]
     ;
 

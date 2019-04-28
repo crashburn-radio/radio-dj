@@ -1,5 +1,6 @@
 { stdenv, fetchurl, cmake, pkgconfig,
-libshout, sox, ffmpeg-full, jansson, symlinkJoin,
+libshout, sox, ffmpeg-full, jansson,
+jq, symlinkJoin,
 writeShellScriptBin, aubio,
 ...}:
 
@@ -30,32 +31,59 @@ let
 
   /* use this tool as first agrument */
   printTrack = writeShellScriptBin "print-track" /* sh */ ''
-    FILE=$1
+  FILE=$1
+  BASENAME="$( echo "$FILE" | xargs basename -s .mp3 | xargs basename -s .ogg )"
+  DIRNAME="$( dirname "$FILE" )"
+  JSON_FILE="$DIRNAME/$BASENAME.rdj"
 
-    (rm ${tmpFile} &> /dev/null) || true
+  # create tmp file
+  ${sox}/bin/sox -q "$FILE" ${tmpFile} &> /dev/null
 
-    ${sox}/bin/sox -q "$FILE" ${tmpFile} &> /dev/null
+  if [[ -f "$JSON_FILE" ]]
+  then
+    cueInApprox=$( cat $JSON_FILE | ${jq}/bin/jq '.cueInApprox' )
+    cueOutApprox=$( cat $JSON_FILE | ${jq}/bin/jq '.cueOutApprox' )
 
-    CUE_IN=`
+    CUE_IN=$(
       ${aubio}/bin/aubiotrack \
                     --time-format samples \
-                    --input ${tmpFile} | head -n10 | tail -n1`
-
-    CUE_OUT=`
+                    --input ${tmpFile} | \
+        while read line; do test $line -le $cueInApprox && echo $line; done | \
+        tail -n1 )
+    CUE_OUT=$(
       ${aubio}/bin/aubiotrack \
                     --time-format samples \
-                    --input ${tmpFile} | tail -n10| head -n1`
+                    --input ${tmpFile} | \
+        while read line; do test $line -ge $cueOutApprox && echo $line; done | \
+        head -n1 )
 
-    rm ${tmpFile} || true &> /dev/null
+  else
 
-    cat <<EOF
+    CUE_IN=$(
+      ${aubio}/bin/aubiotrack \
+                    --time-format samples \
+                    --input ${tmpFile} | head -n10 | tail -n1)
+    CUE_OUT=$(
+      ${aubio}/bin/aubiotrack \
+                    --time-format samples \
+                    --input ${tmpFile} | tail -n10| head -n1)
+
+  fi
+
+  # delete tmp file
+  rm ${tmpFile} || true &> /dev/null
+
+  # output
+  cat <<EOF
     {
       "filename":"$FILE",
       "cueIn":$CUE_IN,
       "cueOut":$CUE_OUT
     }
-    EOF
+  EOF
   '';
+
+
 
 in
 
