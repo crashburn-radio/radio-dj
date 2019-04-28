@@ -21,26 +21,35 @@ let
     pkgs.aubio
   ];
 
+
+  /* the radio-dj tool set */
   radioPkgs = pkgs.callPackage ./default.nix {};
 
-  # todo : spaces in files are still a problem!
+  /* the script that spits out the next track to play */
   nextTrackScript = folder:
   pkgs.writeShellScriptBin "nextTrack" /* sh */ ''
-  IFS='
-  '
-  A=( `find ${folder} -type f  | egrep "(mp3$|ogg$)"` )
-  elemNumber=$(( $RANDOM % ${"$"}{#A[*]} ))
-  ${radioPkgs}/bin/print-track "${"$"}{A[${"$"}elemNumber]}"
+    export PATH="${pkgs.lib.makeBinPath [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+    ]}"
+    TRACK=$(find ${folder} -type f  | egrep "(mp3$|ogg$)" | shuf -n 1)
+    ${radioPkgs}/bin/print-track "$TRACK"
   '';
 
-  runRadio = pkgs.writeShellScriptBin "radio-run" /* sh */ ''
+  tmpFile = "/dev/shm/render.wav";
+
+
+  /* an exmaple script on how to create a service that runs this the RadioDj */
+  runRadio = folder:
+  pkgs.writeShellScriptBin "radio-run" /* sh */ ''
   ${radioPkgs}/bin/RadioDj \
     localhost \
     8000 \
-    /radio.ogg \
-    palo \
-    palo \
-    ${nextTrackScript "/home/palo/music-library/techno"}/bin/nextTrack
+    /radio.mp3 \
+    username \
+    password \
+    ${nextTrackScript folder}/bin/nextTrack
   '';
 
 in
@@ -53,8 +62,8 @@ pkgs.mkShell {
     ++ ide
     ++ [
       radioPkgs
-      (nextTrackScript "/home/palo/music-library" )
-      runRadio
+      (nextTrackScript "./.good" )
+      (runRadio "./.playlist1")
     ]
     ;
 
