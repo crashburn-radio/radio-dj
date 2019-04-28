@@ -1,11 +1,11 @@
-{ stdenv, fetchurl, cmake, pkgconfig,
-libshout, sox, ffmpeg-full, jansson,
-jq, symlinkJoin,
-writeShellScriptBin, aubio, writeText, mpv, 
+{ stdenv, fetchurl, writeShellScriptBin,
+cmake, pkgconfig, libshout, sox, ffmpeg-full,
+jansson, jq, symlinkJoin, aubio, writeText,
+mpv,
 ...}:
 
 let
-  version = "0.1.0";
+  version = "0.1.1";
 
   tmpFile = "/dev/shm/tmpfile.wav";
 
@@ -34,9 +34,6 @@ let
   /* use this tool as first argument */
   printTrack = writeShellScriptBin "print-track" /* sh */ ''
   FILE=$1
-  #BASENAME="$( echo "$FILE" | xargs basename -s .mp3 | xargs basename -s .ogg )"
-  #DIRNAME="$( dirname "$FILE" )"
-  #JSON_FILE="$DIRNAME/$BASENAME.rdj"
   JSON_FILE="$FILE.rdj"
 
   # create tmp file
@@ -143,9 +140,6 @@ let
        --script=${cue_in_out} "$@"
   '';
 
-
-
-
 in
 
 symlinkJoin {
@@ -157,9 +151,9 @@ symlinkJoin {
   ];
   meta = with stdenv.lib; {
     description = "automatic radio dj tool set";
-    homepage = https://git.ingolf-wagner.de/crashburn_radio/radio_dj;
+    homepage = https://github.com/crashburn-radio;
     license = licenses.gpl3;
-    maintainers = with maintainers; [ palo lass ];
+    maintainers = with maintainers; [ mrVanDalo lassulus ];
     platforms = [ "x86_64-linux" "i686-linux" ];
   };
 }

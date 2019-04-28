@@ -21,8 +21,11 @@ let
     pkgs.aubio
   ];
 
+
+  /* the radio-dj tool set */
   radioPkgs = pkgs.callPackage ./default.nix {};
 
+  /* the script that spits out the next track to play */
   nextTrackScript = folder:
   pkgs.writeShellScriptBin "nextTrack" /* sh */ ''
     export PATH="${pkgs.lib.makeBinPath [
@@ -36,18 +39,18 @@ let
 
   tmpFile = "/dev/shm/render.wav";
 
+
+  /* an exmaple script on how to create a service that runs this the RadioDj */
   runRadio = folder:
   pkgs.writeShellScriptBin "radio-run" /* sh */ ''
   ${radioPkgs}/bin/RadioDj \
     localhost \
     8000 \
-    /radio.ogg \
-    palo \
-    palo \
+    /radio.mp3 \
+    username \
+    password \
     ${nextTrackScript folder}/bin/nextTrack
   '';
-
-
 
 in
 
