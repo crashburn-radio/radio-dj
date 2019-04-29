@@ -1,10 +1,10 @@
-{ stdenv, fetchurl, writeShellScriptBin,
-cmake, pkgconfig, libshout, sox, ffmpeg-full,
-jansson, jq, symlinkJoin, aubio, writeText,
-mpv,
+{ stdenv, fetchurl, writeScript, writeShellScriptBin, writeText,
+cmake, pkgconfig, libshout, sox, ffmpeg-full, mpv,
+jansson, jq, symlinkJoin, aubio, pup, youtube-dl, curl,
 ...}:
 
 let
+
   version = "0.1.2";
 
   tmpFile = "/dev/shm/tmpfile.wav";
@@ -30,6 +30,28 @@ let
       ];
 
     };
+
+  /* download from bandcamp */
+  bandCampScript = writeShellScriptBin "download-bandcamp" /* sh */ ''
+    URL="$1"
+    foldername="$( basename "$URL" )"
+    mkdir -p "$foldername"
+    cd $foldername
+    ${curl}/bin/curl $URL \
+      | ${pup}/bin/pup '#license json{}' \
+      | ${jq}/bin/jq ' .[]
+        | .children | [ .[] | .href ]
+        | {
+            "license" :  (if .[0] then .[0] else "most likely unfree" end)
+          , "url": "'$URL'"
+          }' \
+      > metadata.json
+    ${youtube-dl}/bin/youtube-dl \
+      --extract-audio \
+      --audio-quality 0 \
+      --audio-format mp3 \
+      $URL
+  '';
 
   /* use this tool as first argument */
   printTrack = writeShellScriptBin "print-track" /* sh */ ''
@@ -83,18 +105,50 @@ let
   EOF
   '';
 
-
   /* A script to create approximations of cue points */
   review = let
+
+    mergeMetaData = writeScript "move-track" /* sh */ ''
+      FILE="$1"
+      TARGET="$2"
+      JSON_FILE="$FILE.rdj"
+      METADATA_FILE="$( dirname "$FILE" )/metadata.json"
+      TARGET_JSON_FILE="$TARGET/$( basename "$FILE" ).rdj"
+
+      # create target directory
+      mkdir -p "$TARGET"
+
+      # create metadata json file
+      if [[ -f "$JSON_FILE" ]] && [[ -f "$METADATA_FILE" ]]
+      then
+        jq -s '.[0] * .[1]' "$JSON_FILE" "$METADATA_FILE" > "$TARGET_JSON_FILE"
+        rm "$JSON_FILE"
+      else
+        if [[ -f "$JSON_FILE" ]]
+        then
+          mv "$JSON_FILE" "$TARGET_JSON_FILE"
+        fi
+        if [[ -f "$METADATA_FILE" ]]
+        then
+          cp "$METADATA_FILE" "$TARGET_JSON_FILE"
+        fi
+      fi
+
+      # move track
+      mv "$FILE" "$TARGET/$( basename "$FILE" )"
+
+    '';
+
+        #os.execute("mkdir -p '" .. tmp_dir .. "'")
+        #os.execute("mv '" .. track .. "' '" .. tmp_dir .. "'")
+        #os.execute("mv '" .. track .. ".rdj' '" .. tmp_dir .. "'")
 
     moveToDir = key: dir: writeText "move-with-${key}.lua" /* lua */ ''
       tmp_dir = "${dir}"
 
       function move_current_track_${key}()
         track = mp.get_property("path")
-        os.execute("mkdir -p '" .. tmp_dir .. "'")
-        os.execute("mv '" .. track .. "' '" .. tmp_dir .. "'")
-        os.execute("mv '" .. track .. ".rdj' '" .. tmp_dir .. "'")
+        os.execute("${mergeMetaData} '" .. track .. "' '" .. tmp_dir .. "'")
         print("moved '" .. track .. "' to " .. tmp_dir)
       end
 
@@ -148,6 +202,7 @@ symlinkJoin {
     radioDjBin
     printTrack
     review
+    bandCampScript
   ];
   meta = with stdenv.lib; {
     description = "automatic radio dj tool set";
