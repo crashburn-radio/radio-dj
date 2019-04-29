@@ -1,10 +1,6 @@
-//
-// Created by palo on 4/24/19.
-//
-
 #include "SendService.h"
 
-#define bufferSize 1024
+#define BufferSize 1024
 
 SendService::SendService(const char *host, int port, const char *mount, const char *username, const char *password) {
 
@@ -21,7 +17,7 @@ SendService::SendService(const char *host, int port, const char *mount, const ch
 }
 
 void SendService::setup() {
-    shouter->setup();
+    shouter->connect();
     encoder.setup();
     encodedQueue = encoder.getQueue();
 
@@ -30,9 +26,10 @@ void SendService::setup() {
 void SendService::sendBlocking(int32_t *left, int32_t *right, size_t size) {
 
     /* mixing,encoding */
+    // todo : don't use a queue here, return a vector
     encoder.encode(left, right, size);
 
-    unsigned char sendBuffer[bufferSize];
+    unsigned char sendBuffer[BufferSize];
 
     /* sending */
     while (!encodedQueue->empty()) {

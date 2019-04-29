@@ -26,8 +26,6 @@ pkg_check_modules(LibJansson REQUIRED jansson)
 
 # projects
 add_subdirectory (RadioDj)
-add_subdirectory (examples/libshout)
-add_subdirectory (examples/ffmpeg)
 
 install(TARGETS RadioDj
   RUNTIME DESTINATION bin

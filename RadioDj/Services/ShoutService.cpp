@@ -1,14 +1,10 @@
-//
-// Created by palo on 4/22/19.
-//
-
 #include <cstdio>
 #include <stdexcept>
 #include <unistd.h>
 #include "ShoutService.h"
 
-void ShoutService::setup() {
-    long rett;
+void ShoutService::connect() {
+    long returnValue;
 
     shout_init();
 
@@ -52,24 +48,19 @@ void ShoutService::setup() {
         throw std::runtime_error("Error setting format");
     }
 
-    //if (shout_set_nonblocking(shout, 1) != SHOUTERR_SUCCESS) {
-    //    printf("Error setting non-blocking mode: %s\n", shout_get_error(shout));
-    //    throw std::runtime_error("penis");
-    //}
+    returnValue = shout_open(shout);
 
-    rett = shout_open(shout);
-
-    if (rett == SHOUTERR_SUCCESS) {
-        rett = SHOUTERR_CONNECTED;
+    if (returnValue == SHOUTERR_SUCCESS) {
+        returnValue = SHOUTERR_CONNECTED;
     }
 
-    while (rett == SHOUTERR_BUSY) {
+    while (returnValue == SHOUTERR_BUSY) {
         printf("Connection pending. Sleeping...\n");
         sleep(1);
-        rett = shout_get_connected(shout);
+        returnValue = shout_get_connected(shout);
     }
 
-    if (rett == SHOUTERR_CONNECTED) {
+    if (returnValue == SHOUTERR_CONNECTED) {
         printf("Connected to server...\n");
     } else {
         printf("Error connecting: %s\n", shout_get_error(shout));
@@ -79,8 +70,8 @@ void ShoutService::setup() {
 }
 
 void ShoutService::send(unsigned char *buff, long read) {
-    long rett = shout_send(shout, buff, read);
-    if (rett != SHOUTERR_SUCCESS) {
+    long returnValue = shout_send(shout, buff, read);
+    if (returnValue != SHOUTERR_SUCCESS) {
         printf("DEBUG: Send error: %s\n", shout_get_error(shout));
         throw std::runtime_error("penis");
     }

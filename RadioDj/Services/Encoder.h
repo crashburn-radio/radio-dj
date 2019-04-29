@@ -1,10 +1,7 @@
-//
-// Created by palo on 4/22/19.
-//
-
 #ifndef RADIODJ_ENCODER_H
 #define RADIODJ_ENCODER_H
 
+#define SAMPLE_RATE 44100
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/channel_layout.h>
@@ -20,20 +17,8 @@ public:
 
     void setup();
 
-    int sample_rate();
-
-    int frameSize();
-
-    int32_t *getDeprecatedDataLeft();
-
-    int32_t *getDeprecatedDataRight();
-
-    int channels();
-
+    // todo : create a queue of vectors or a return vector or something
     std::queue<unsigned char> *getQueue() const;
-
-    // deprecated
-    void encodeToQueue(std::queue<unsigned char> *queue);
 
     /**
      * encode stereo signal, output will be found in the encodedQueue
@@ -46,12 +31,10 @@ public:
     void encode(int32_t *leftInput, int32_t *rightInput, size_t size);
 
 private:
-    const AVCodec *codec;
-    AVCodecContext *c = NULL;
 
-    AVPacket *pkt;
-
-    AVFrame *frame;
+    const AVCodec *codec = nullptr;
+    AVCodecContext *pCodecContext = nullptr;
+    AVFrame *frame = nullptr;
 
     /**
      * encode a frame properly setup by the encode function

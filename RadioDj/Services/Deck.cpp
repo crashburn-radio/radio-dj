@@ -1,13 +1,9 @@
 #include <utility>
 #include <iostream>
 
-//
-// Created by palo on 4/24/19.
-//
-
 #include "Deck.h"
 
-#define bufferSize 4096
+#define BufferSize 4096
 #define SampleRate 44100
 
 void Deck::load() {
@@ -20,12 +16,12 @@ void Deck::load() {
 
     decoder->seekToPosition(cueIn);
     position = cueIn;
-    std::cout << "Loaded Track : " << * track->filename << "\n";
+    std::cout << "Loaded Track : " << *track->filename << "\n";
 }
 
 size_t Deck::read(int32_t *left, int32_t *right, size_t size) {
 
-    int32_t mixBuffer[bufferSize];
+    int32_t mixBuffer[BufferSize];
 
     size_t readSamples = size;
     if (!hitCue()) {
@@ -34,7 +30,7 @@ size_t Deck::read(int32_t *left, int32_t *right, size_t size) {
             readSamples = size;
         }
     }
-    size_t toRead = std::min(2 * readSamples, (size_t) bufferSize);
+    size_t toRead = std::min(2 * readSamples, (size_t) BufferSize);
     size_t readLength = decoder->read(mixBuffer, toRead);
 
     for (int index = 0; index < (readLength / 2); index++) {

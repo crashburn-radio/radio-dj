@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/24/19.
-//
-
 #ifndef RADIODJ_DECK_H
 #define RADIODJ_DECK_H
 

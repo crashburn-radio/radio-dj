@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/25/19.
-//
-
 #ifndef RADIODJ_BLOCKINGQUEUE_TPP
 #define RADIODJ_BLOCKINGQUEUE_TPP
 

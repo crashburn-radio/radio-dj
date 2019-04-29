@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/22/19.
-//
-
 #ifndef RADIODJ_SHOUTSERVICE_H
 #define RADIODJ_SHOUTSERVICE_H
 
@@ -43,7 +39,6 @@ public:
         this->shutdown();
     }
 
-
     /**
      * send a buffer to host
      */
@@ -54,14 +49,18 @@ public:
      */
     void sync();
 
-
-    void setup();
+    /**
+     * connect to ice-cast server, need to be called before using it
+     */
+    void connect();
 
 private:
 
     void shutdown();
 
-    shout_t *shout;
+    shout_t *shout = nullptr;
+
+    /* parameters */
     const char *host;
     int port;
     const char *password;

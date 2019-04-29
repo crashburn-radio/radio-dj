@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/26/19.
-//
-
 #ifndef RADIODJ_THREADMIX_H
 #define RADIODJ_THREADMIX_H
 

@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/26/19.
-//
-
 #ifndef RADIODJ_NEXTTRACKSERVICE_H
 #define RADIODJ_NEXTTRACKSERVICE_H
 
