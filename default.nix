@@ -139,10 +139,6 @@ let
 
     '';
 
-        #os.execute("mkdir -p '" .. tmp_dir .. "'")
-        #os.execute("mv '" .. track .. "' '" .. tmp_dir .. "'")
-        #os.execute("mv '" .. track .. ".rdj' '" .. tmp_dir .. "'")
-
     moveToDir = key: dir: writeText "move-with-${key}.lua" /* lua */ ''
       tmp_dir = "${dir}"
 
