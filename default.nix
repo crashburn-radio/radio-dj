@@ -62,8 +62,8 @@ let
 
   if [[ -f "$JSON_FILE" ]]
   then
-    cueInApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '.cueInApprox' )
-    cueOutApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '.cueOutApprox' )
+    cueInApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '(.cueInApproxTime * 44100)' | awk '{print int($1)}' )
+    cueOutApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '(.cueOutApproxTime * 44100)' | awk '{print int($1)}' )
 
     CUE_IN=$(
       ${aubio}/bin/aubiotrack \
@@ -162,13 +162,13 @@ let
     cue_in_out = writeText "cue_in_out.lua" /* lua */ ''
       in_cue = 0
       function save_in_cue()
-        in_cue = mp.get_property_number("stream-pos")
+        in_cue = mp.get_property_number("time-pos")
       end
 
       function save_out_cue()
-        out_cue = mp.get_property_number("stream-pos")
+        out_cue = mp.get_property_number("time-pos")
         track = mp.get_property("path")
-        os.execute("echo '{\"cueInApprox\":" .. in_cue .. ",\"cueOutApprox\":" .. out_cue .. "}' | tee '" .. track .. ".rdj'")
+        os.execute("echo '{\"cueInApproxTime\":" .. in_cue .. ",\"cueOutApproxTime\":" .. out_cue .. "}' | tee '" .. track .. ".rdj'")
       end
 
       mp.add_forced_key_binding("i", "save_in_cue", save_in_cue)
