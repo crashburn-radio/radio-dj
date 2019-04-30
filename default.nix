@@ -1,14 +1,13 @@
 { stdenv, fetchurl, writeScript, writeShellScriptBin, writeText,
 cmake, pkgconfig, libshout, sox, ffmpeg-full, mpv,
 jansson, jq, symlinkJoin, aubio, pup, youtube-dl, curl,
+# wav file stored for track analysis
+tmpFile ? "/dev/shm/tmpfile.wav",
 ...}:
 
 let
 
-  version = "0.1.2";
-
-  tmpFile = "/dev/shm/tmpfile.wav";
-
+  version = "0.1.4";
 
   /* The radio dj software */
   radioDjBin =
