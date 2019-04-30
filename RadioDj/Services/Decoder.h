@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/23/19.
-//
-
 #ifndef RADIODJ_DECODER_H
 #define RADIODJ_DECODER_H
 
@@ -17,7 +13,6 @@ public:
     explicit Decoder(Path filename);
 
     void seekToPosition(long sample);
-
 
     /**
      * read from session and write to buffer

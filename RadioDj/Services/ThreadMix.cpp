@@ -1,15 +1,12 @@
-//
-// Created by palo on 4/26/19.
-//
-
 #include <cstdint>
 #include <cmath>
 #include <iostream>
 #include "ThreadMix.h"
 #include "ThreadSend.h"
 
-#define bufferSize 512
-#define  SampleRate 44100
+#define BufferSize 512
+#define SampleRate 44100
+#define CrossFadeTime 10.0
 
 void ThreadMix::setup(ThreadSend *threadSend) {
     // todo use in constructor
@@ -18,20 +15,20 @@ void ThreadMix::setup(ThreadSend *threadSend) {
 
 void ThreadMix::loop() {
 
-    int32_t deckALeft[bufferSize];
-    int32_t deckARight[bufferSize];
+    int32_t deckALeft[BufferSize];
+    int32_t deckARight[BufferSize];
 
-    int32_t deckBLeft[bufferSize];
-    int32_t deckBRight[bufferSize];
+    int32_t deckBLeft[BufferSize];
+    int32_t deckBRight[BufferSize];
 
-    int32_t mixLeft[bufferSize];
-    int32_t mixRight[bufferSize];
+    int32_t mixLeft[BufferSize];
+    int32_t mixRight[BufferSize];
 
     int32_t *sendLeft;
     int32_t *sendRight;
 
 
-    double_t rampFactor = 1.0 / (5.0 * SampleRate);
+    double_t rampFactor = 1.0 / (CrossFadeTime * SampleRate);
     long rampSampleCounter = 0;
 
     deckA = commandQueue.pop();
@@ -44,7 +41,7 @@ void ThreadMix::loop() {
 
     int commandQueueBufferSize = 0;
 
-    std::cout << "Playback Track : " << * deckA->getFilename() << "\n";
+    std::cout << "Playback Track : " << *deckA->getFilename() << "\n";
 
     while (true) {
 
@@ -65,7 +62,7 @@ void ThreadMix::loop() {
         size_t readLength = deckA->read(
                 (int32_t *) &deckALeft,
                 (int32_t *) &deckARight,
-                bufferSize);
+                BufferSize);
 
         // todo something here
         if (readLength == 0) {
@@ -119,7 +116,7 @@ void ThreadMix::loop() {
             deckB = deckC;
             deckC = nullptr;
             backpressureConditional.notify_all();
-            std::cout << "Playback Track : " << * deckA->getFilename() << "\n";
+            std::cout << "Playback Track : " << *deckA->getFilename() << "\n";
             rampSampleCounter = 0;
         }
 

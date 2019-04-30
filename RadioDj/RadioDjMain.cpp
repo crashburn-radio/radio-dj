@@ -23,23 +23,23 @@ int main(int argc, char **argv) {
     NextTrackService service;
 
 
+    char *host = argv[1];
 
-    char * host = argv[1];
-
-    std::stringstream convert(argv[2]); // set up a stringstream variable named convert, initialized with the input from argv[1]
+    std::stringstream convert(
+            argv[2]); // set up a stringstream variable named convert, initialized with the input from argv[1]
     int port;
-    if (!(convert >> port)){ // do the conversion
+    if (!(convert >> port)) { // do the conversion
         std::cerr << "Port is not a number" << port << "\n";
         exit(1);
     }
 
-    char * mount = argv[3];
-    char * username = argv[4];
-    char * password = argv[5];
+    char *mount = argv[3];
+    char *username = argv[4];
+    char *password = argv[5];
     const char *command = argv[6];
 
     /* icecast sender thread */
-    ThreadSend threadSend ( host, port,mount, username, password );
+    ThreadSend threadSend(host, port, mount, username, password);
     threadSend.setup();
 
     /* preload decks */

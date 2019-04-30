@@ -1,9 +1,5 @@
 #include <utility>
 
-//
-// Created by palo on 4/26/19.
-//
-
 #ifndef RADIODJ_TYPES_H
 #define RADIODJ_TYPES_H
 
@@ -33,6 +29,5 @@ struct Track {
     }
 
 };
-
 
 #endif //RADIODJ_TYPES_H

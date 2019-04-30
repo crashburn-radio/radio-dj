@@ -1,9 +1,4 @@
 #include <utility>
-
-//
-// Created by palo on 4/23/19.
-//
-
 #include <cstdio>
 #include <cstring>
 #include "Decoder.h"

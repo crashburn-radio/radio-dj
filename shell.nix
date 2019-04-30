@@ -64,6 +64,7 @@ pkgs.mkShell {
       radioPkgs
       (nextTrackScript "./.playlist1" )
       (runRadio "./.playlist1")
+      pkgs.pup
     ]
     ;
 

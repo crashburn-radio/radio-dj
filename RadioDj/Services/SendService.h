@@ -1,7 +1,3 @@
-//
-// Created by palo on 4/24/19.
-//
-
 #ifndef RADIODJ_SENDSERVICE_H
 #define RADIODJ_SENDSERVICE_H
 
