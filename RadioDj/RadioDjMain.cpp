@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
 
     NextTrackService service;
 
-
     char *host = argv[1];
 
     std::stringstream convert(
@@ -39,7 +38,10 @@ int main(int argc, char **argv) {
     const char *command = argv[6];
 
     /* icecast sender thread */
-    ThreadSend threadSend(host, port, mount, username, password);
+    auto encoder = std::make_shared<EncoderService>();
+    auto shoutService = std::make_shared<ShoutService>(host, port, mount, username, password);
+    auto sendService = std::make_shared<SendService>(encoder, shoutService);
+    ThreadSend threadSend(sendService);
     threadSend.setup();
 
     /* preload decks */

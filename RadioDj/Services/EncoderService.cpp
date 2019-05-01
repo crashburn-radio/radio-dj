@@ -7,13 +7,13 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
-#include "Encoder.h"
+#include "EncoderService.h"
 #include <math.h>
 #include <cassert>
 
 #define bitrate 320000
 
-/* check that a given sample format is supported by the encoder */
+/* check that a given sample format is supported by the encoderService */
 static int check_sample_fmt(const AVCodec *codec,
                             enum AVSampleFormat sampleFormat) {
 
@@ -66,7 +66,7 @@ static int select_channel_layout(const AVCodec *codec) {
     return bestChannelLayout;
 }
 
-void Encoder::setup() {
+void EncoderService::setup() {
     int returnValue;
 
     codec = avcodec_find_encoder(AV_CODEC_ID_MP3);
@@ -84,12 +84,12 @@ void Encoder::setup() {
     pCodecContext->bit_rate = bitrate;
     pCodecContext->sample_fmt = AV_SAMPLE_FMT_S32P;
     if (!check_sample_fmt(codec, pCodecContext->sample_fmt)) {
-        fprintf(stderr, "Encoder does not support sample format %s",
+        fprintf(stderr, "EncoderService does not support sample format %s",
                 av_get_sample_fmt_name(pCodecContext->sample_fmt));
         exit(1);
     }
 
-    /* select other audio parameters supported by the encoder */
+    /* select other audio parameters supported by the encoderService */
     pCodecContext->sample_rate = select_sample_rate(codec);
     pCodecContext->channel_layout = select_channel_layout(codec);
     pCodecContext->channels = av_get_channel_layout_nb_channels(pCodecContext->channel_layout);
@@ -126,7 +126,7 @@ void Encoder::setup() {
 
 }
 
-void Encoder::encode(int32_t *leftInput,
+std::shared_ptr<std::vector <unsigned char>> EncoderService::encode(int32_t *leftInput,
                      int32_t *rightInput,
                      size_t size) {
 
@@ -137,8 +137,9 @@ void Encoder::encode(int32_t *leftInput,
 
     auto *left = (int32_t *) frame->data[0];
     auto *right = (int32_t *) frame->data[1];
-
     int frameSize = pCodecContext->frame_size;
+
+    std::shared_ptr<std::vector<unsigned char>> result = std::make_shared<std::vector<unsigned char>>();
 
     while (rightQueue->size() > frameSize) {
 
@@ -152,19 +153,26 @@ void Encoder::encode(int32_t *leftInput,
 
         }
 
-        encodeFrame();
+        auto encodedFrame = encodeFrame();
+        for (int index = 0; index < encodedFrame->size(); index++){
+            result->push_back((*encodedFrame)[index]);
+        }
 
     }
 
+    return result;
+
 }
 
-void Encoder::encodeFrame() {
+std::shared_ptr<std::vector<unsigned char>> EncoderService::encodeFrame() {
     int returnValue;
+
+    std::shared_ptr<std::vector<unsigned char>> result = std::make_shared<std::vector<unsigned char>>();
 
     /* send the frame for encoding */
     returnValue = avcodec_send_frame(pCodecContext, frame);
     if (returnValue < 0) {
-        fprintf(stderr, "Error sending the frame to the encoder\n");
+        fprintf(stderr, "Error sending the frame to the encoderService\n");
         exit(1);
     }
 
@@ -178,7 +186,7 @@ void Encoder::encodeFrame() {
     while (returnValue >= 0) {
         returnValue = avcodec_receive_packet(pCodecContext, pPacket);
         if (returnValue == AVERROR(EAGAIN) || returnValue == AVERROR_EOF) {
-            return;
+            return result;
         } else if (returnValue < 0) {
             fprintf(stderr, "Error encoding audio frame\n");
             exit(1);
@@ -186,15 +194,13 @@ void Encoder::encodeFrame() {
 
         /* fill output buffer */
         for (int index = 0; index < pPacket->size; index++) {
-            queue->push(pPacket->data[index]);
+            result->push_back(pPacket->data[index]);
         }
 
         av_packet_unref(pPacket);
     }
 
-}
+    return result;
 
-std::queue<unsigned char> *Encoder::getQueue() const {
-    return queue;
 }
 

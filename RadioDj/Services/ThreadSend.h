@@ -1,3 +1,5 @@
+#include <utility>
+
 #ifndef RADIODJ_THREADSEND_H
 #define RADIODJ_THREADSEND_H
 
@@ -7,6 +9,7 @@
 #include <condition_variable>
 #include "../Utils/BlockingQueue.tpp"
 #include "SendService.h"
+#include "Thread.h"
 
 
 struct SendCommand {
@@ -14,16 +17,18 @@ struct SendCommand {
     std::shared_ptr<std::vector<int32_t>> right;
 };
 
-class ThreadSend {
-
+class ThreadSend : public Thread {
 
 public:
 
-    ThreadSend(const char *host, int port, const char *mount, const char *username, const char *password);
+    // ThreadSend(const char *host, int port, const char *mount, const char *username, const char *password);
+    explicit ThreadSend(std::shared_ptr<SendService> sendService) : sendService(std::move(sendService)){
+
+    }
 
     void setup();
 
-    void loop();
+    void loop() override;
 
     /**
      * send buffers to be send to icecast
@@ -56,6 +61,7 @@ private:
     /* back pressure */
     std::condition_variable backpressureConditional;
     std::mutex backpressureMutex;
+
 };
 
 
