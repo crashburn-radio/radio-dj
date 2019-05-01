@@ -1,13 +1,13 @@
 { stdenv, fetchurl, writeScript, writeShellScriptBin, writeText,
 cmake, pkgconfig, libshout, sox, ffmpeg-full, mpv,
-jansson, jq, symlinkJoin, aubio, pup, youtube-dl, curl,
+jansson, jq, symlinkJoin, aubio, pup, youtube-dl, curl, gawk,
 # wav file stored for track analysis
 tmpFile ? "/dev/shm/tmpfile.wav",
 ...}:
 
 let
 
-  version = "0.1.5";
+  version = "0.1.6";
 
   /* The radio dj software */
   radioDjBin =
@@ -62,8 +62,8 @@ let
 
   if [[ -f "$JSON_FILE" ]]
   then
-    cueInApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '(.cueInApproxTime * 44100)' | awk '{print int($1)}' )
-    cueOutApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '(.cueOutApproxTime * 44100)' | awk '{print int($1)}' )
+    cueInApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '(.cueInApproxTime * 44100)' | ${gawk}/bin/awk '{print int($1)}' )
+    cueOutApprox=$( cat "$JSON_FILE" | ${jq}/bin/jq '(.cueOutApproxTime * 44100)' | ${gawk}/bin/awk '{print int($1)}' )
 
     CUE_IN=$(
       ${aubio}/bin/aubiotrack \
@@ -177,6 +177,7 @@ let
 
   in writeShellScriptBin "review-tracks" /* sh */ ''
   exec ${mpv}/bin/mpv \
+       --no-video \
        --no-config \
        --script=${delete1} \
        --script=${delete2} \
