@@ -52,6 +52,3 @@ void ThreadSend::wait() {
     backpressureConditional.wait(lock);
 }
 
-ThreadSend::ThreadSend(const char *host, int port, const char *mount, const char *username, const char *password) {
-    sendService = std::make_shared<SendService>(host, port, mount, username, password);
-}

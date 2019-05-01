@@ -1,7 +1,6 @@
-#ifndef RADIODJ_ENCODER_H
-#define RADIODJ_ENCODER_H
+#ifndef RADIODJ_ENCODERSERVICE_H
+#define RADIODJ_ENCODERSERVICE_H
 
-#define SAMPLE_RATE 44100
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/channel_layout.h>
@@ -11,14 +10,15 @@ extern "C" {
 }
 
 #include <queue>
+#include <memory>
+#include <vector>
 
-class Encoder {
+#define SAMPLE_RATE 44100
+
+class EncoderService {
 public:
 
     void setup();
-
-    // todo : create a queue of vectors or a return vector or something
-    std::queue<unsigned char> *getQueue() const;
 
     /**
      * encode stereo signal, output will be found in the encodedQueue
@@ -28,7 +28,7 @@ public:
      * @param rightInput buffer holding right channel samples
      * @param size size of left buffer
      */
-    void encode(int32_t *leftInput, int32_t *rightInput, size_t size);
+    std::shared_ptr<std::vector<unsigned char>> encode(int32_t *leftInput, int32_t *rightInput, size_t size);
 
 private:
 
@@ -39,14 +39,12 @@ private:
     /**
      * encode a frame properly setup by the encode function
      */
-    void encodeFrame();
+    std::shared_ptr<std::vector<unsigned char>> encodeFrame();
 
-    std::queue<unsigned char> *queue = new std::queue<unsigned char>;
     std::queue<int32_t> *leftQueue = new std::queue<int32_t>;
     std::queue<int32_t> *rightQueue = new std::queue<int32_t>;
-
 
 };
 
 
-#endif //RADIODJ_ENCODER_H
+#endif //RADIODJ_ENCODERSERVICE_H
