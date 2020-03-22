@@ -1,7 +1,11 @@
 extern crate libpulse_binding as pulse;
 extern crate libpulse_simple_binding as psimple;
-
 extern crate minimp3;
+
+mod decoder;
+
+use crate::decoder::DecoderStatus;
+use crate::decoder::RadioDecoder;
 
 use minimp3::{Decoder, Error, Frame};
 
@@ -31,37 +35,20 @@ fn main() {
     )
     .unwrap();
 
-    const BUFFER_SIZE: usize = 1152;
+    const BUFFER_SIZE: usize = 512;
 
-    let mut decoder = Decoder::new(File::open("assets/sample1.mp3").unwrap());
+    let mut radio_decoder = RadioDecoder::new("assets/sample1.mp3").unwrap();
 
     loop {
-        match decoder.next_frame() {
-            Ok(Frame {
-                data,
-                sample_rate,
-                channels,
-                ..
-            }) => {
-                println!(
-                    "Decoded {} samples, {} channels with {} sample_rate",
-                    data.len() / channels,
-                    channels,
-                    sample_rate
-                );
+        let mut buffer: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
+        let decoder_statue = radio_decoder.fill_next(&mut buffer);
 
-                let mut buffer: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
-                let mut index = 0;
-                for sample_part in data.iter() {
-                    buffer[index] = *sample_part;
-                    index = index + 1;
-                }
-                let output_data: [u8; 2 * 2 * BUFFER_SIZE] = unsafe { std::mem::transmute(buffer) };
-                pulse_simple.write(output_data.as_ref()).unwrap();
-            }
+        let output_data: [u8; 2 * 2 * BUFFER_SIZE] = unsafe { std::mem::transmute(buffer) };
+        pulse_simple.write(output_data.as_ref()).unwrap();
 
-            Err(Error::Eof) => break,
-            Err(e) => panic!("{:?}", e),
+        match decoder_statue {
+            DecoderStatus::Empty => break,
+            DecoderStatus::HasContent => continue,
         }
     }
 
