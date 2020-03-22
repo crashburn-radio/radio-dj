@@ -83,7 +83,6 @@ impl<D: DecoderFacade> Decoder for Mp3Decoder<D> {
                 return (DecoderStatus::HasContent, audio_buffer);
             }
 
-            // todo : handle different sample rates
             if self.current_frame.channels == 1 {
                 audio_buffer.push(AudioSegment {
                     left: self.current_frame.data[self.current_frame_offset],
@@ -98,6 +97,9 @@ impl<D: DecoderFacade> Decoder for Mp3Decoder<D> {
 
             self.current_frame_offset = self.current_frame_offset + self.current_frame.channels;
         }
+    }
+    fn sample_rate(&self) -> u32 {
+        self.current_frame.sample_rate as u32
     }
 }
 

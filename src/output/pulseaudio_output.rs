@@ -49,6 +49,7 @@ impl PulseAudioOutput {
 }
 
 impl OutputBackend for PulseAudioOutput {
+    // todo : handle audio buffers with different sizes
     fn write(&self, buffer: AudioBuffer) {
         let mut output_data: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
         assert!(buffer.len() <= BUFFER_SIZE);

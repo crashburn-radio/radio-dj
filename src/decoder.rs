@@ -10,6 +10,7 @@ pub enum DecoderStatus {
     Empty,
 }
 
+/// should always be of size BUFFER_SIZE
 pub type AudioBuffer = Vec<AudioSegment>;
 
 #[derive(Debug, PartialEq)]
@@ -21,4 +22,6 @@ pub struct AudioSegment {
 pub trait Decoder {
     /// decode next AudioBuffer
     fn next(&mut self) -> (DecoderStatus, AudioBuffer);
+
+    fn sample_rate(&self) -> u32;
 }
