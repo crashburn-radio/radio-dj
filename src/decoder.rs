@@ -1,5 +1,6 @@
 extern crate minimp3;
 
+use crate::output::BUFFER_SIZE;
 use minimp3::{Decoder as Mp3Decoder, Error, Frame};
 use mockall::predicate::*;
 use mockall::*;
@@ -9,6 +10,14 @@ use std::fs::File;
 pub enum DecoderStatus {
     HasContent,
     Empty,
+}
+
+pub type AudioBuffer = Vec<AudioSegment>;
+
+#[derive(Debug, PartialEq)]
+pub struct AudioSegment {
+    pub(crate) left: i16,
+    pub(crate) right: i16,
 }
 
 #[automock]
@@ -59,38 +68,36 @@ impl<D: DecoderFacade> RadioDecoder<D> {
     /// fill a buffer with the next part
     /// return false if there is nothing more left
     /// expect the input buffer to be zeroed.
-    /// todo : return a Vector instead using an input buffer
-    pub fn fill_next(&mut self, buffer: &mut [i16]) -> DecoderStatus {
-        let mut buffer_index = 0;
+    pub fn next(&mut self) -> (DecoderStatus, AudioBuffer) {
+        let mut audio_buffer: Vec<AudioSegment> = Vec::with_capacity(BUFFER_SIZE);
+
         loop {
             if self.current_frame_offset >= self.current_frame.data.len() {
                 if self.next_frame() {
                     continue;
                 } else {
-                    return DecoderStatus::Empty;
+                    return (DecoderStatus::Empty, audio_buffer);
                 }
             }
 
-            if buffer_index >= buffer.len() {
-                return DecoderStatus::HasContent;
+            if audio_buffer.len() >= BUFFER_SIZE {
+                return (DecoderStatus::HasContent, audio_buffer);
             }
 
             // todo : handle different sample rates
             if self.current_frame.channels == 1 {
-                buffer[buffer_index] = self.current_frame.data[self.current_frame_offset];
-                buffer[buffer_index + 1] = self.current_frame.data[self.current_frame_offset];
-                buffer_index = buffer_index + 2;
-            } else if self.current_frame.channels == 2 {
-                buffer[buffer_index] = self.current_frame.data[self.current_frame_offset];
-                buffer_index = buffer_index + 1;
+                audio_buffer.push(AudioSegment {
+                    left: self.current_frame.data[self.current_frame_offset],
+                    right: self.current_frame.data[self.current_frame_offset],
+                });
             } else {
-                if (self.current_frame_offset % self.current_frame.channels) < 2 {
-                    buffer[buffer_index] = self.current_frame.data[self.current_frame_offset];
-                    buffer_index = buffer_index + 1;
-                }
+                audio_buffer.push(AudioSegment {
+                    left: self.current_frame.data[self.current_frame_offset],
+                    right: self.current_frame.data[self.current_frame_offset + 1],
+                });
             }
 
-            self.current_frame_offset = self.current_frame_offset + 1;
+            self.current_frame_offset = self.current_frame_offset + self.current_frame.channels;
         }
     }
 
@@ -116,7 +123,6 @@ mod tests {
     fn test_channel_stereo() {
         let mut mock = MockDecoderFacade::new();
         mock.expect_next_frame()
-            .times(3)
             .returning(|| -> Result<Frame, Error> {
                 let frame = Frame {
                     data: vec![1, 2, 3, 4],
@@ -128,18 +134,22 @@ mod tests {
                 Ok(frame)
             });
         let mut radio_decoder = RadioDecoder::create(Box::new(mock)).unwrap();
-        const BUFFER_SIZE: usize = 4;
-        let mut buffer: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
-        let decoder_status = radio_decoder.fill_next(&mut buffer);
+        let (decoder_status, mut buffer) = radio_decoder.next();
         assert_eq!(decoder_status, DecoderStatus::HasContent);
-        assert_eq!(buffer, [1, 2, 3, 4, 1, 2, 3, 4])
+        buffer.truncate(2);
+        assert_eq!(
+            buffer,
+            vec![
+                AudioSegment { left: 1, right: 2 },
+                AudioSegment { left: 3, right: 4 },
+            ]
+        );
     }
 
     #[test]
     fn test_channel_mono() {
         let mut mock = MockDecoderFacade::new();
         mock.expect_next_frame()
-            .times(2)
             .returning(|| -> Result<Frame, Error> {
                 let frame = Frame {
                     data: vec![1, 2, 3, 4],
@@ -151,11 +161,18 @@ mod tests {
                 Ok(frame)
             });
         let mut radio_decoder = RadioDecoder::create(Box::new(mock)).unwrap();
-        const BUFFER_SIZE: usize = 4;
-        let mut buffer: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
-        let decoder_status = radio_decoder.fill_next(&mut buffer);
+        let (decoder_status, mut buffer) = radio_decoder.next();
         assert_eq!(decoder_status, DecoderStatus::HasContent);
-        assert_eq!(buffer, [1, 1, 2, 2, 3, 3, 4, 4])
+        buffer.truncate(4);
+        assert_eq!(
+            buffer,
+            vec![
+                AudioSegment { left: 1, right: 1 },
+                AudioSegment { left: 2, right: 2 },
+                AudioSegment { left: 3, right: 3 },
+                AudioSegment { left: 4, right: 4 },
+            ]
+        );
     }
 
     #[test]
@@ -173,10 +190,18 @@ mod tests {
                 Ok(frame)
             });
         let mut radio_decoder = RadioDecoder::create(Box::new(mock)).unwrap();
-        const BUFFER_SIZE: usize = 4;
-        let mut buffer: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
-        let decoder_status = radio_decoder.fill_next(&mut buffer);
+        let (decoder_status, mut buffer) = radio_decoder.next();
         assert_eq!(decoder_status, DecoderStatus::HasContent);
-        assert_eq!(buffer, [1, 2, 4, 5, 1, 2, 4, 5])
+        buffer.truncate(4);
+
+        assert_eq!(
+            buffer,
+            vec![
+                AudioSegment { left: 1, right: 2 },
+                AudioSegment { left: 4, right: 5 },
+                AudioSegment { left: 1, right: 2 },
+                AudioSegment { left: 4, right: 5 },
+            ]
+        );
     }
 }

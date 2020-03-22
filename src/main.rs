@@ -14,9 +14,8 @@ fn main() {
     let mut radio_decoder = RadioDecoder::new("assets/sample1.mp3").unwrap();
 
     loop {
-        let mut buffer: [i16; output::BUFFER_SIZE] = [0; output::BUFFER_SIZE];
-        let decoder_statue = radio_decoder.fill_next(&mut buffer);
-        output_thread.write(&buffer);
+        let (decoder_statue, buffer) = radio_decoder.next();
+        output_thread.write(buffer);
 
         match decoder_statue {
             DecoderStatus::Empty => break,

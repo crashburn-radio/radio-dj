@@ -2,6 +2,7 @@ use psimple::Simple;
 use pulse::sample;
 use pulse::stream::Direction;
 
+use crate::decoder::AudioBuffer;
 use crate::output::{OutputBackend, BUFFER_SIZE};
 
 const APPLICATION_NAME: &str = "Radio Dj";
@@ -48,8 +49,18 @@ impl PulseAudioOutput {
 }
 
 impl OutputBackend for PulseAudioOutput {
-    fn write(&self, buffer: &[i16; BUFFER_SIZE]) {
-        let output_data: [u8; 2 * BUFFER_SIZE] = unsafe { std::mem::transmute(*buffer) };
+    fn write(&self, buffer: AudioBuffer) {
+        let mut output_data: [i16; 2 * BUFFER_SIZE] = [0; 2 * BUFFER_SIZE];
+        assert!(buffer.len() <= BUFFER_SIZE);
+
+        let mut counter = 0;
+        for audio_segment in buffer.iter() {
+            output_data[counter * 2 + 0] = audio_segment.left;
+            output_data[counter * 2 + 1] = audio_segment.right;
+            counter = counter + 1;
+        }
+
+        let output_data: [u8; 4 * BUFFER_SIZE] = unsafe { std::mem::transmute(output_data) };
         self.simple.write(output_data.as_ref()).unwrap();
     }
 
