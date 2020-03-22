@@ -5,16 +5,16 @@ extern crate minimp3;
 mod decoder;
 mod output;
 
-use crate::decoder::DecoderStatus;
-use crate::decoder::RadioDecoder;
+use crate::decoder::Mp3Decoder;
+use crate::decoder::{Decoder, DecoderStatus};
 use crate::output::OutputThread;
 
 fn main() {
     let output_thread = OutputThread::new();
-    let mut radio_decoder = RadioDecoder::new("assets/sample1.mp3").unwrap();
+    let mut decoder = Mp3Decoder::new("assets/sample1.mp3").unwrap();
 
     loop {
-        let (decoder_statue, buffer) = radio_decoder.next();
+        let (decoder_statue, buffer) = decoder.next();
         output_thread.write(buffer);
 
         match decoder_statue {

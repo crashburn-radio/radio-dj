@@ -42,6 +42,6 @@ impl OutputThread {
         self.thread_sender.send(buffer).unwrap();
     }
     pub fn close(&self) {
-        // todo : not necessary really
+        // todo : send via prio channel
     }
 }
