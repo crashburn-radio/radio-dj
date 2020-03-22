@@ -5,6 +5,7 @@ extern crate minimp3;
 mod decoder;
 
 use crate::decoder::DecoderStatus;
+use crate::decoder::Mp3DecoderFacade;
 use crate::decoder::RadioDecoder;
 
 use minimp3::{Decoder, Error, Frame};
