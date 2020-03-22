@@ -22,7 +22,7 @@ pub struct Mp3DecoderFacade {
 }
 impl Mp3DecoderFacade {
     pub fn new(path: &str) -> Self {
-        let mut decoder = Mp3Decoder::new(File::open(path).unwrap());
+        let decoder = Mp3Decoder::new(File::open(path).unwrap());
         Mp3DecoderFacade { decoder }
     }
 }
@@ -41,7 +41,7 @@ pub struct RadioDecoder<R> {
 impl RadioDecoder<Mp3DecoderFacade> {
     /// create a Radio decoder vor MP3s
     pub fn new(path: &str) -> Result<Self, ()> {
-        let mp3_decoder = Mp3DecoderFacade::new("assets/sample1.mp3");
+        let mp3_decoder = Mp3DecoderFacade::new(path);
         RadioDecoder::create(Box::new(mp3_decoder))
     }
 }
@@ -59,6 +59,7 @@ impl<D: DecoderFacade> RadioDecoder<D> {
     /// fill a buffer with the next part
     /// return false if there is nothing more left
     /// expect the input buffer to be zeroed.
+    /// todo : return a Vector instead using an input buffer
     pub fn fill_next(&mut self, buffer: &mut [i16]) -> DecoderStatus {
         let mut buffer_index = 0;
         loop {
@@ -109,7 +110,7 @@ impl<D: DecoderFacade> RadioDecoder<D> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use minimp3::{Decoder, Error, Frame};
+    use minimp3::{Error, Frame};
 
     #[test]
     fn test_channel_stereo() {
