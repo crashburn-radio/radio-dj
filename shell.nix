@@ -4,6 +4,7 @@ pkgs.mkShell {
   buildInputs = [
     pkgs.pulseaudioFull
     pkgs.pkgconfig
+    pkgs.aubio
   ];
 
 }

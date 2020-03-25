@@ -11,3 +11,6 @@ libpulse-simple-binding = "^2.15.0"
 libpulse-binding = "^2.15.0"
 minimp3 = "^0.3.5"
 mockall = "^0.6.0"
+serde = { version = "^1.0.105" , features = ["derive"] }
+serde_json = "^1.0.48"
+aubio-rs = "^0.1.2"
