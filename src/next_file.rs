@@ -1,5 +1,5 @@
-use crate::errors::RadioError;
 use serde::Deserialize;
+use std::error::Error;
 use std::process::Command;
 
 #[derive(Deserialize)]
@@ -19,28 +19,14 @@ pub struct NextFile {
 
 impl NextFile {
     /// run command to determine next track to play
-    pub fn run_command(program_path: &str) -> Result<Self, RadioError> {
+    pub fn run_command(program_path: &str) -> Result<Self, Box<dyn Error>> {
         // hand over currently playing track
         // hand over current bpm
         let mut command = Command::new(program_path);
 
-        let status = command
-            .status()
-            .expect("command for next track did not generate a status");
-
-        if status.success() {
-            command
-                .output()
-                .map_err(|error| RadioError::IoError(error))
-                .and_then(|output| {
-                    serde_json::from_slice(output.stdout.as_slice())
-                        .map_err(|error| RadioError::JsonError(error))
-                })
-        } else {
-            Err(RadioError::RadioError(
-                "Command was not successful".to_string(),
-            ))
-        }
+        let output = command.output()?;
+        let next_file = serde_json::from_slice(output.stdout.as_slice())?;
+        Ok(next_file)
     }
 }
 
