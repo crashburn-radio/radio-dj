@@ -19,6 +19,9 @@ pub struct AudioSegment {
     pub(crate) right: i16,
 }
 
+use mockall::automock;
+
+#[automock]
 pub trait Decoder {
     /// decode next AudioBuffer
     fn next(&mut self) -> (DecoderStatus, AudioBuffer);

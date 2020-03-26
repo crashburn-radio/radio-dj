@@ -1,21 +1,29 @@
 use crate::decoder::{AudioBuffer, AudioSegment, Decoder, DecoderStatus, Mp3Decoder};
+use crate::output::SAMPLE_RATE;
 
 /// A Deck that holds a Track and plays it from a Cue point to a Cue Point
 pub struct Deck {
     decoder: Box<dyn Decoder>,
     /// cue sample where to start
     cue: usize,
-    status: DeckStatus,
+    cue_stopping: usize,
+    pub status: DeckStatus,
 
     current_play_position: usize,
     current_audio_buffer: Option<AudioBuffer>,
 }
 
 /// in which state is the deck right now
-enum DeckStatus {
-    Started,
-    Waiting,
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DeckStatus {
+    /// Deck is playing
+    Playing,
+    /// Deck is finished playing
     Stopped,
+    /// Deck reached stop cue point
+    Stopping,
+    /// Deck is waiting to play
+    Waiting,
 }
 
 impl Deck {
@@ -28,6 +36,7 @@ impl Deck {
         Deck {
             decoder,
             cue: 0,
+            cue_stopping: (10 * SAMPLE_RATE) as usize,
             status: DeckStatus::Waiting,
             current_play_position: 0,
             current_audio_buffer: None,
@@ -38,9 +47,10 @@ impl Deck {
         match &self.status {
             DeckStatus::Waiting => {
                 self.seek_to_cue_point();
+                self.status = DeckStatus::Playing;
                 self.get_next()
             }
-            DeckStatus::Started => self.get_next(),
+            DeckStatus::Playing | DeckStatus::Stopping => self.get_next(),
             DeckStatus::Stopped => vec![],
         }
     }
@@ -97,40 +107,27 @@ impl Deck {
         let (decoder_status, audio_buffer) = self.decoder.next();
         match decoder_status {
             DecoderStatus::Empty => self.status = DeckStatus::Stopped,
-            DecoderStatus::HasContent => self.status = DeckStatus::Started,
+            DecoderStatus::HasContent => self.status = DeckStatus::Playing,
+        }
+        self.current_play_position = self.current_play_position + audio_buffer.len();
+        if self.status == DeckStatus::Playing
+            && self.current_play_position >= self.cue_stopping as usize
+        {
+            self.status = DeckStatus::Stopping
         }
         audio_buffer
-    }
-
-    pub fn has_stopped(&self) -> bool {
-        match self.status {
-            DeckStatus::Stopped => true,
-            _ => false,
-        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    use mockall::predicate::*;
-    use mockall::*;
-
+    use crate::decoder::MockDecoder;
     use crate::decoder::AudioSegment;
-
-    // because #[automock] does not work
-    mock! {
-    MyDecoder {}
-    trait Decoder {
-        fn next(&mut self) -> (DecoderStatus, AudioBuffer);
-        fn sample_rate(&self) -> u32;
-    }
-    }
 
     #[test]
     fn test_seek() {
-        let mut decoder = MockMyDecoder::new();
+        let mut decoder = MockDecoder::new();
         decoder
             .expect_next()
             .returning(|| -> (DecoderStatus, AudioBuffer) {
@@ -173,7 +170,7 @@ mod tests {
         let mut audio_buffer = deck.next();
         assert_eq!(deck.current_play_position, 6);
         assert_eq!(deck.cue, 6);
-        assert_eq!(deck.has_stopped(), false);
+        assert_eq!(deck.status, DeckStatus::Playing);
         audio_buffer.truncate(4);
         assert_eq!(
             audio_buffer,

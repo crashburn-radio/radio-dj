@@ -3,11 +3,10 @@ use pulse::sample;
 use pulse::stream::Direction;
 
 use crate::decoder::AudioBuffer;
-use crate::output::{OutputBackend, BUFFER_SIZE};
+use crate::output::{OutputBackend, BUFFER_SIZE, SAMPLE_RATE};
 
 const APPLICATION_NAME: &str = "Radio Dj";
 const SAMPLE_FORMAT: sample::Format = sample::Format::S16le;
-const SAMPLE_RATE: u32 = 44100;
 
 pub struct PulseAudioOutput {
     simple: Simple,

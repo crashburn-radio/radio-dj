@@ -7,10 +7,11 @@ use std::thread;
 
 pub const BUFFER_SIZE: usize = 512;
 // how many messages are stored till writing will block
-const MESSAGE_CHANNEL_SIZE: usize = 50;
+const MESSAGE_CHANNEL_SIZE: usize = 100;
+
+pub const SAMPLE_RATE: u32 = 44100;
 
 trait OutputBackend {
-    // fn write(&self, buffer: &[i16; BUFFER_SIZE]);
     fn write(&self, buffer: AudioBuffer);
     fn close(&self);
 }
@@ -21,6 +22,9 @@ pub struct OutputThread {
     thread_sender: SyncSender<AudioBuffer>,
 }
 
+use mockall::automock;
+
+#[automock]
 impl OutputThread {
     pub fn new() -> Self {
         let (thread_sender, thread_receiver): (SyncSender<AudioBuffer>, Receiver<AudioBuffer>) =
@@ -40,8 +44,5 @@ impl OutputThread {
 
     pub fn write(&self, buffer: AudioBuffer) {
         self.thread_sender.send(buffer).unwrap();
-    }
-    pub fn close(&self) {
-        // todo : send via prio channel
     }
 }

@@ -264,6 +264,7 @@ name = "radio-dj2"
 version = "0.1.0"
 dependencies = [
  "aubio-rs",
+ "cfg-if",
  "libpulse-binding",
  "libpulse-simple-binding",
  "minimp3",
