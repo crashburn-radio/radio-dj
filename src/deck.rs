@@ -122,8 +122,8 @@ impl Deck {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::decoder::MockDecoder;
     use crate::decoder::AudioSegment;
+    use crate::decoder::MockDecoder;
 
     #[test]
     fn test_seek() {
