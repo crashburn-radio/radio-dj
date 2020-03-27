@@ -235,24 +235,9 @@ mod tests {
         let mut output_thread = MockOutputThread::default();
         output_thread
             .expect_write()
-            .with(eq(vec![
-                AudioSegment {
-                    left: 100,
-                    right: 100,
-                },
-                AudioSegment {
-                    left: 100,
-                    right: 100,
-                },
-                AudioSegment {
-                    left: 100,
-                    right: 100,
-                },
-                AudioSegment {
-                    left: 100,
-                    right: 100,
-                },
-            ]))
+            .with(eq(AudioSegment::new_audio_buffer(vec![
+                100, 100, 100, 100, 100, 100, 100, 100,
+            ])))
             .return_const(());
         let next_file_function = MockNextDeckFunction::default();
         let mut mixer = Mixer::new(Arc::new(output_thread), Arc::new(next_file_function));
@@ -262,44 +247,10 @@ mod tests {
         let (deck_b_sender, deck_b_receiver): (SyncSender<MixerMessage>, Receiver<MixerMessage>) =
             sync_channel(MESSAGE_CHANNEL_SIZE);
 
-        deck_a_sender.send(MixerMessage::AudioBuffer(vec![
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-        ]));
+        deck_a_sender.send(MixerMessage::AudioBuffer(AudioSegment::new_audio_buffer(
+            vec![100, 100, 100, 100, 100, 100, 100, 100],
+        )));
         deck_a_sender.send(MixerMessage::ExitMainLoop);
-
-        deck_b_sender.send(MixerMessage::AudioBuffer(vec![
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-        ]));
 
         mixer.main_loop(deck_a_receiver, deck_b_receiver);
     }
@@ -309,21 +260,9 @@ mod tests {
         let mut output_thread = MockOutputThread::default();
         output_thread
             .expect_write()
-            .with(eq(vec![
-                AudioSegment {
-                    left: 75,
-                    right: 75,
-                },
-                AudioSegment {
-                    left: 50,
-                    right: 50,
-                },
-                AudioSegment {
-                    left: 25,
-                    right: 25,
-                },
-                AudioSegment { left: 0, right: 0 },
-            ]))
+            .with(eq(AudioSegment::new_audio_buffer(vec![
+                75, 75, 50, 50, 25, 25, 0, 0,
+            ])))
             .times(1)
             .return_const(());
         let next_file_function = MockNextDeckFunction::default();
@@ -335,33 +274,15 @@ mod tests {
             sync_channel(MESSAGE_CHANNEL_SIZE);
 
         deck_a_sender.send(MixerMessage::Stopping);
-        deck_a_sender.send(MixerMessage::AudioBuffer(vec![
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-            AudioSegment {
-                left: 100,
-                right: 100,
-            },
-        ]));
+        deck_a_sender.send(MixerMessage::AudioBuffer(AudioSegment::new_audio_buffer(
+            vec![100, 100, 100, 100, 100, 100, 100, 100],
+        )));
         deck_a_sender.send(MixerMessage::Stopped);
         deck_a_sender.send(MixerMessage::ExitMainLoop);
 
-        deck_b_sender.send(MixerMessage::AudioBuffer(vec![
-            AudioSegment { left: 0, right: 0 },
-            AudioSegment { left: 0, right: 0 },
-            AudioSegment { left: 0, right: 0 },
-            AudioSegment { left: 0, right: 0 },
-        ]));
+        deck_b_sender.send(MixerMessage::AudioBuffer(AudioSegment::new_audio_buffer(
+            vec![0, 0, 0, 0, 0, 0, 0, 0],
+        )));
         deck_b_sender.send(MixerMessage::ExitMainLoop);
 
         mixer.main_loop(deck_a_receiver, deck_b_receiver);
