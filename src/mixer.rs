@@ -38,6 +38,9 @@ enum MixerMessage {
 
     /// track stopped, next message should be AudioBuffer of the next track loaded in a new deck
     Stopped,
+
+    /// stop main loop
+    ExitMainLoop,
 }
 
 enum MixerStatus {
@@ -127,6 +130,7 @@ impl Mixer {
         let mut buffer_b_cache: VecDeque<AudioSegment> = VecDeque::with_capacity(BUFFER_SIZE);
         loop {
             match deck_a.recv().unwrap() {
+                MixerMessage::ExitMainLoop => break,
                 MixerMessage::Stopping => self.status = MixerStatus::Mixing,
                 MixerMessage::Stopped => {
                     std::mem::swap(&mut deck_a, &mut deck_b);
@@ -221,11 +225,84 @@ mod tests {
     use crate::next_file::MockNextDeckFunction;
     use crate::output::MockOutputThread;
 
+    use mockall::predicate::*;
+    use mockall::*;
+    use std::ops::Deref;
+
     #[test]
     fn test_main_loop() {
-        let output_thread: MockOutputThread = MockOutputThread::default();
-        let next_file_function: MockNextDeckFunction = MockNextDeckFunction::default();
-        Mixer::new(Arc::new(output_thread), Arc::new(next_file_function));
-        assert!(false);
+        let audio_buffer = vec![
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+        ];
+
+        let mut output_thread = MockOutputThread::default();
+        output_thread
+            .expect_write()
+            .with(eq(audio_buffer))
+            .times(1)
+            .return_const(());
+        let next_file_function = MockNextDeckFunction::default();
+        let mut mixer = Mixer::new(Arc::new(output_thread), Arc::new(next_file_function));
+
+        let (deck_a_sender, deck_a_receiver): (SyncSender<MixerMessage>, Receiver<MixerMessage>) =
+            sync_channel(MESSAGE_CHANNEL_SIZE);
+        let (deck_b_sender, deck_b_receiver): (SyncSender<MixerMessage>, Receiver<MixerMessage>) =
+            sync_channel(MESSAGE_CHANNEL_SIZE);
+
+        deck_a_sender.send(MixerMessage::AudioBuffer(vec![
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+        ]));
+        deck_a_sender.send(MixerMessage::ExitMainLoop);
+
+        deck_b_sender.send(MixerMessage::AudioBuffer(vec![
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+            AudioSegment {
+                left: 100,
+                right: 100,
+            },
+        ]));
+
+        mixer.main_loop(deck_a_receiver, deck_b_receiver);
     }
 }
